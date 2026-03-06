@@ -1,17 +1,18 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { MessageSquare, X, Send, Bot, User } from 'lucide-react';
-import { GoogleGenAI } from '@google/genai';
 
 // Lazy initialization to prevent crashing on load if API key is missing
-let aiClient: GoogleGenAI | null = null;
-const getAIClient = () => {
+let aiClient: any = null;
+const getAIClient = async () => {
   if (!aiClient) {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
       console.warn('GEMINI_API_KEY is missing. Chatbot will not function.');
       return null;
     }
+    // Dynamically import to prevent top-level process.env crashes in the browser
+    const { GoogleGenAI } = await import('@google/genai');
     aiClient = new GoogleGenAI({ apiKey });
   }
   return aiClient;
@@ -43,7 +44,7 @@ export function AIChatbot() {
     setIsLoading(true);
 
     try {
-      const ai = getAIClient();
+      const ai = await getAIClient();
       if (!ai) {
         setMessages(prev => [...prev, { role: 'model', text: 'Sorry, the AI is currently offline due to missing configuration.' }]);
         return;
